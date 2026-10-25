@@ -1,0 +1,12 @@
+[project]
+name = "qwen-1m-for-claude"
+version = "0.1.0"
+description = "Serve Qwen3.8-27B-family models with vLLM at 1M context as a local backend for Claude Code"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "causal-conv1d>=1.6.2.post1",
+    "flash-attn>=2.8.3.post1",
+    "flash-linear-attention>=0.5.1",
+    "vllm>=0.25.1",
+]

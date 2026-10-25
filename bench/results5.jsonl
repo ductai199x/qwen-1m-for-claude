@@ -1,0 +1,1 @@
+{"name": "dflash2-lengths", "bench": "bench_lengths", "startup_s": 234, "kv_tokens": 1629012, "vram_mib": "88167/88167", "result": {"32000": {"ok": true, "s": 2.6, "prompt": 29923}, "128000": {"ok": true, "s": 7.1, "prompt": 119617}, "200000": {"ok": true, "s": 8.7, "prompt": 199097}, "262000": {"ok": false, "err": "HTTP Error 500: Internal Server Error"}}}
