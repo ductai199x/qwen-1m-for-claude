@@ -61,13 +61,15 @@ exists (`LOOKUP=0` to opt out). Measured on this box (Swift 1.5 + DFlash2, TP=2,
 
 | | stock 0.32 | 0.32 + lookup |
 |---|---|---|
-| Copy-heavy decode (rewrite a file 100K tokens back) | 548 tok/s | **688 tok/s** |
+| Copy-heavy decode (rewrite a file 100K tokens back) | 553 tok/s | **688 tok/s** (+24%) |
 | Decode @600K / warm turn @600K | 258 tok/s / 3.57 s | 257 tok/s / 3.31 s |
 | KV capacity | 1.54M tokens | **1.68M tokens** |
 
-HyperQwen's split-KV verify attention (`VLLM_SPEC_DECODE_ATTN=1`) and torch top-k sampler fallback
-(`VLLM_USE_FLASHINFER_SAMPLER=0`) are left off: on H200 they made decode at 600K ~4x slower (67 vs 276 tok/s).
-HyperQwen's own stack (vLLM 0.31) cannot run this model at 1M context (int32 index overflows fixed in 0.32).
+HyperQwen's split-KV verify attention (`VLLM_SPEC_DECODE_ATTN=1`) is left off: on H200 it slows decode as context
+grows (-36% at 100K, -68% at 600K; neutral at short context). Their torch top-k sampler fallback
+(`VLLM_USE_FLASHINFER_SAMPLER=0`) costs nothing measurable and stays at vLLM's default. HyperQwen's own stack (vLLM
+0.31) cannot run this model at 1M context (int32 index overflows, vllm#57030, fixed in 0.32). Lookup output is
+token-identical to stock DFlash2 under greedy decoding. Evidence for all of this: `bench/verify/NOTES.md`.
 
 ### DFlash2 long-context fix
 
@@ -78,7 +80,7 @@ prompts past that crash the server (`index out of bounds ... < 262144`). All dra
 the drafter in its trained regime. Verified up to 875K tokens.
 
 **Known limitation:** vLLM 0.32's KV offloading never restores a prefix when DFlash2 is the
-drafter (its sliding-window KV group breaks the hit; 0 cached tokens on return), so
+drafter (0 cached tokens on return; not root-caused), so
 `serve-swift.sh` disables the RAM tier with DFlash2. `SPEC_METHOD=mtp KV_OFFLOAD_GIB=200
 ./serve-swift.sh` trades ~30% long-context decode speed for the RAM tier, which only matters
 with 3+ concurrent long sessions (the GPU cache holds ~1.5M tokens).

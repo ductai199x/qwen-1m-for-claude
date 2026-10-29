@@ -1,0 +1,7 @@
+{"name": "B3-stock-drafter", "bench": "bench_lengths", "startup_s": 1083, "kv_tokens": 520553, "vram_mib": "83533", "result": {"32000": {"ok": true, "s": 3.4, "prompt": 29923}, "128000": {"ok": true, "s": 10.9, "prompt": 119617}, "200000": {"ok": true, "s": 14.7, "prompt": 199097}, "262000": {"ok": false, "err": "HTTP Error 500: Internal Server Error"}}}
+{"name": "B3-patched-drafter", "bench": "bench_lengths", "startup_s": 221, "kv_tokens": 518454, "vram_mib": "83537", "result": {"32000": {"ok": true, "s": 3.3, "prompt": 29923}, "128000": {"ok": true, "s": 11.1, "prompt": 119617}, "200000": {"ok": true, "s": 14.7, "prompt": 199097}, "262000": {"ok": true, "s": 15.4, "prompt": 264550}, "300000": {"ok": true, "s": 11.4, "prompt": 299947}, "400000": {"ok": true, "s": 27.4, "prompt": 391843}, "600000": {"ok": false, "err": "HTTP Error 400: Bad Request"}}}
+B1-pristine031-262k: READY
+B1-pristine031-1m: CRASHED -- RuntimeError: Triton Error [CUDA]: an illegal memory access was encountered
+B1-pristine031-1m-blocking: CRASHED -- RuntimeError: Triton Error [CUDA]: an illegal memory access was encountered
+B1-stock032-1m: READY
+laneB-done

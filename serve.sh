@@ -5,6 +5,7 @@
 #
 # Env overrides:
 #   GPUS        CUDA devices to use (default: 6,7)
+#   TP          tensor-parallel size (default: 2)
 #   PORT        API port (default: 8000)
 #   GPU_UTIL    fraction of each GPU's VRAM vLLM may use (default: 0.62)
 #   MAX_LEN     max context length (default: 1000000)
@@ -55,7 +56,7 @@ fi
 exec "${VLLM_BIN:-.venv/bin/vllm}" serve "${MODEL:-Qwen/Qwen3.8-27B-FP8}" \
     --served-model-name "${SERVED_NAME:-qwen-27b-1m}" \
     --port "${PORT:-8000}" \
-    --tensor-parallel-size 2 \
+    --tensor-parallel-size "${TP:-2}" \
     --max-model-len "${MAX_LEN:-1000000}" \
     --hf-overrides "$ROPE" \
     --gpu-memory-utilization "${GPU_UTIL:-0.62}" \

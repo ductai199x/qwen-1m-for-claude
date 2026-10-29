@@ -1,0 +1,10 @@
+# Wed Oct 28 10:31:59 PM EDT 2026 mode=single server=127.0.0.1:18020
+ROW cohort C1 real prompts T=default | e2e=247.59 tok/s | decode(C/meanTPOT)=254.5 | tok/step=3.17 | meanTTFT=92.73 ms
+ROW cohort C2 real prompts T=default | e2e=431.83 tok/s | decode(C/meanTPOT)=498.8 | tok/step=3.20 | meanTTFT=132.15 ms
+ROW cohort C4 real prompts T=default | e2e=739.11 tok/s | decode(C/meanTPOT)=934.6 | tok/step=3.33 | meanTTFT=139.60 ms
+ROW cohort C8 real prompts T=default | e2e=980.00 tok/s | decode(C/meanTPOT)=1311.5 | tok/step=3.09 | meanTTFT=728.95 ms
+ROW cohort C1 real prompts T=0 | e2e=254.01 tok/s | decode(C/meanTPOT)=263.9 | tok/step=3.19 | meanTTFT=93.11 ms
+ROW cohort C2 real prompts T=0 | e2e=452.06 tok/s | decode(C/meanTPOT)=529.1 | tok/step=3.31 | meanTTFT=122.50 ms
+ROW cohort C4 real prompts T=0 | e2e=699.91 tok/s | decode(C/meanTPOT)=956.9 | tok/step=3.30 | meanTTFT=140.90 ms
+ROW cohort C8 real prompts T=0 | e2e=874.97 tok/s | decode(C/meanTPOT)=1462.5 | tok/step=3.20 | meanTTFT=522.75 ms
+# raw logs in /home/tai/1-workdir/hyperqwen/bench/results

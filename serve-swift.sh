@@ -6,13 +6,13 @@
 #
 # LOOKUP (default 1 when .venv-port exists, see setup-port.sh): run on the patched vLLM with DFlash2
 # context-lookup drafting -- tokens the model copies from anywhere in the conversation (file edits, quoted
-# code) are drafted straight from the context. +26% decode on copy-heavy output, same speed otherwise.
+# code) are drafted straight from the context. +24% decode on copy-heavy output, same speed otherwise.
 # HyperQwen's split-KV verify attention and torch top-k sampler fallback stay off: on H200 they made
-# decode at 600K context ~4x slower. LOOKUP=0 serves on the stock .venv.
+# decode at 600K context ~3x slower (verified: 56 vs 177 tok/s, TP=1). LOOKUP=0 serves on the stock .venv.
 #
 # The host-RAM prefix-cache tier is off by default here: with the DFlash2 drafter vLLM's offloading
-# never restores a prefix (0 cached tokens on return; the drafter's sliding-window KV group breaks
-# the hit). For many concurrent long sessions, SPEC_METHOD=mtp KV_OFFLOAD_GIB=200 gets the RAM tier
+# never restores a prefix (0 cached tokens on return; not root-caused -- vLLM logs that no KV-cache
+# group is annotated as a drafter group). For many concurrent long sessions, SPEC_METHOD=mtp KV_OFFLOAD_GIB=200 gets the RAM tier
 # back at the cost of ~30% slower decode at long context.
 cd "$(dirname "$0")"
 export MODEL=ukisai/Swift-1.5-Qwen3.8-27b SERVED_NAME="${SERVED_NAME:-swift-27b-1m}" SPEC_METHOD="${SPEC_METHOD:-dflash}"

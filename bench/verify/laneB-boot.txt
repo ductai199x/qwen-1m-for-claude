@@ -1,0 +1,4 @@
+B1-pristine031-262k: READY
+B1-pristine031-1m: CRASHED -- RuntimeError: Triton Error [CUDA]: an illegal memory access was encountered
+B1-pristine031-1m-blocking: CRASHED -- RuntimeError: Triton Error [CUDA]: an illegal memory access was encountered
+B1-stock032-1m: READY
