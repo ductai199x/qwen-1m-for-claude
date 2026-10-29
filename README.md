@@ -8,12 +8,13 @@ Claude Code sessions (one or a few streams, ~600K-token conversations).
 ```bash
 ./upgrade.sh --no-upgrade   # build the venv from uv.lock (flash-attn etc. built from source)
 ./setup-dflash2.sh          # build the long-context-safe DFlash2 drafter in models/
+./setup-port.sh             # build .venv-port: vLLM 0.32 + DFlash2 context-lookup drafting (see below)
 ```
 
 ## Running
 
 ```bash
-PORT=8001 ./serve-swift.sh   # current setup: Swift 1.5 + DFlash2, served as "swift-27b-1m"
+PORT=8001 ./serve-swift.sh   # current setup: Swift 1.5 + DFlash2 + context lookup, served as "swift-27b-1m"
 PORT=8001 ./serve.sh         # official Qwen/Qwen3.8-27B-FP8 + MTP, served as "qwen-27b-1m"
 ```
 
@@ -49,6 +50,24 @@ The model's template rejected or mishandled requests from Claude Code (`/v1/mess
 3. **Mid-conversation system messages** (Claude Code's per-turn reminders) are rendered in place.
    Without this, vLLM merges them into the leading system prompt, which changes the prompt prefix
    and makes the whole conversation miss the prefix cache (full ~75 s re-prefill at 600K).
+
+### DFlash2 context-lookup drafting (`.venv-port`)
+
+`patches/vllm-0.32.0-dflash2-lookup.patch` ports [HyperQwen](https://github.com/syv-ai/HyperQwen)'s DFlash2
+lookup drafting (and its DFlash2 sliding-window KV-group fixes) from vLLM 0.31 to 0.32. While the model copies
+text from anywhere in the conversation (a file it is editing, quoted code), the lookup drafts the copy straight
+from the context instead of from the drafter's 2048-token window. `serve-swift.sh` uses it when `.venv-port`
+exists (`LOOKUP=0` to opt out). Measured on this box (Swift 1.5 + DFlash2, TP=2, 1M context):
+
+| | stock 0.32 | 0.32 + lookup |
+|---|---|---|
+| Copy-heavy decode (rewrite a file 100K tokens back) | 548 tok/s | **688 tok/s** |
+| Decode @600K / warm turn @600K | 258 tok/s / 3.57 s | 257 tok/s / 3.31 s |
+| KV capacity | 1.54M tokens | **1.68M tokens** |
+
+HyperQwen's split-KV verify attention (`VLLM_SPEC_DECODE_ATTN=1`) and torch top-k sampler fallback
+(`VLLM_USE_FLASHINFER_SAMPLER=0`) are left off: on H200 they made decode at 600K ~4x slower (67 vs 276 tok/s).
+HyperQwen's own stack (vLLM 0.31) cannot run this model at 1M context (int32 index overflows fixed in 0.32).
 
 ### DFlash2 long-context fix
 

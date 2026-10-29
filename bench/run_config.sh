@@ -13,8 +13,11 @@ log=bench/logs/$name.log; mkdir -p bench/logs
 env GPUS=0,1 PORT=$PORT "${envs[@]}" setsid ./serve.sh --enable-prompt-tokens-details "$@" > "$log" 2>&1 &
 pid=$!
 t0=$(date +%s)
-until grep -q 'Application startup complete' "$log" || ! kill -0 $pid 2>/dev/null; do sleep 2; done
-if ! kill -0 $pid 2>/dev/null; then
+# a crashed engine can leave the API server hanging, so also stop waiting on a crash in the log
+crash='Traceback|EngineDeadError|illegal memory|ILLEGAL_ADDRESS|device-side assert|out of memory'
+until grep -q 'Application startup complete' "$log" || grep -qE "$crash" "$log" || ! kill -0 $pid 2>/dev/null; do sleep 2; done
+if ! grep -q 'Application startup complete' "$log"; then
+    kill -KILL -- -$pid 2>/dev/null
     echo "{\"name\": \"$name\", \"error\": \"failed to start\"}" | tee -a ${RESULTS:-bench/results.jsonl}
     grep -E 'Error|error' "$log" | tail -3
     exit 1
@@ -24,7 +27,7 @@ kv=$(grep -oE 'GPU KV cache size: [0-9,]+' "$log" | grep -oE '[0-9,]+$' | tr -d 
 mem=$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits -i 0,1 | paste -sd/)
 # BENCH may list several benchmark scripts; each gets its own result line
 for bench in ${BENCH:-bench/bench_long.py}; do
-    res=$(.venv/bin/python -I $bench $PORT qwen-27b-1m $( [[ $bench == *bench_e2e* ]] || echo "$TARGET" ) 2>&1 | tail -1)
+    res=$(.venv/bin/python -I $bench $PORT qwen-27b-1m $(case $bench in *bench_e2e*) ;; *bench_copy*) echo "${COPY_CTX:-100000}" ;; *) echo "$TARGET" ;; esac) 2>&1 | tail -1)
     echo "{\"name\": \"$name\", \"bench\": \"$(basename $bench .py)\", \"startup_s\": $startup, \"kv_tokens\": ${kv:-null}, \"vram_mib\": \"$mem\", \"result\": ${res:-null}}" | tee -a ${RESULTS:-bench/results.jsonl}
 done
 
