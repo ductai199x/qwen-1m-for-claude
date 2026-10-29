@@ -1,15 +1,14 @@
-<!-- DRAFT for review -- not posted. Evidence for every number: bench/verify/NOTES.md and the raw files it lists. -->
+<!-- DRAFT for review -- not posted. A regular issue, posted alongside the field report
+     (hyperqwen-field-report-FORM.md). Evidence for every number: bench/verify/NOTES.md and the raw files it lists. -->
 
-# Field report: H200 (sm90), plus feedback from running Qwen3.8-27B on longer contexts
+# Feedback from running Qwen3.8-27B to 1M context on H200: lookup drafting on vLLM 0.32, and a few long-context findings
 
 Thanks for HyperQwen. The patch notes and docs made it easy to understand what each piece does, and the
-DFlash2 lookup drafting in particular turned out to be a big win for us. Here's our H200 data point (the sm90 one
-you asked for), plus a few things we learned by stretching the setup past what you document.
+DFlash2 lookup drafting in particular turned out to be a big win for us. We posted the standard sm90 field report
+separately (<link>). This issue collects what we learned by stretching the setup well past what you document.
 
 ## TL;DR
 
-- **Setup B works on a single H200** and runs about **2× the 3090 numbers**: 258 tok/s single-stream, 1,370 tok/s at
-  8 concurrent, GSM8K 0.955 (same as your reference).
 - **Lookup drafting works great on H200.** We ported it to vLLM 0.32. For an agent that rewrites files already in its
   context, decode got **24% faster**, with output token-identical to plain DFlash2.
 - **On H200, `VLLM_SPEC_DECODE_ATTN=1` hurts at long context.** It's neutral on short prompts, but decode drops 36% at
@@ -96,32 +95,6 @@ returning to an evicted 600K session got 0 cached tokens. It works fine with MTP
 didn't change that, and vLLM 0.32 logs "no KV-cache group is annotated as a drafter group". We haven't dug further.
 
 ---
-
-<details>
-<summary>Field-report details for setup B (the form fields)</summary>
-
-- **Card:** 1× NVIDIA H200 141 GB SXM (sm90). Findings 1, 2 and 5 also used a second H200 (NVLink, TP=2).
-- **Power limit:** 700 W, the card's default, with no cap set. Not directly comparable to the 250 W 3090 rows.
-- **Stack:** driver 580.105.08, CUDA 13.0, Ubuntu 22.04.5 (kernel 5.15). Native venv per `docs/install.md`: vLLM 0.31.0
-  plus the full `patches/series` applied with `--fuzz 0`, torch 2.13.0+cu130. Model prepared as documented
-  (`dbirks/Qwen3.8-27B-W4A16-AutoRound` + `quant_lm_head` / `quant_embed` / `quant_mtp` / `build_draft_vocab` +
-  `fetch_fast_variant` + `fetch_dflash2`).
-- **Commit:** `ce9615c`
-- **Setup:** B (`.env.example` defaults: `SPEC=dflash2`, `CTX=fast`, `PREFIX_CACHE=1`), `single-user/start_qwen.sh`, one card.
-- **Quality:** `quality_battery.py h200-setupB --gsm-only`: GSM8K n=200, acc=0.955, mean 382 tokens.
-- **Harness output, second run** (the discarded first run was within a few percent, e.g. C1 T=default 254.5):
-
-```
-ROW cohort C1 real prompts T=default | e2e=252.03 tok/s | decode(C/meanTPOT)=258.4 | tok/step=3.24 | meanTTFT=99.07 ms
-ROW cohort C2 real prompts T=default | e2e=429.41 tok/s | decode(C/meanTPOT)=501.3 | tok/step=3.19 | meanTTFT=117.19 ms
-ROW cohort C4 real prompts T=default | e2e=668.20 tok/s | decode(C/meanTPOT)=856.5 | tok/step=3.01 | meanTTFT=141.10 ms
-ROW cohort C8 real prompts T=default | e2e=927.78 tok/s | decode(C/meanTPOT)=1369.9 | tok/step=3.19 | meanTTFT=909.89 ms
-ROW cohort C1 real prompts T=0 | e2e=253.27 tok/s | decode(C/meanTPOT)=263.2 | tok/step=3.19 | meanTTFT=88.99 ms
-ROW cohort C2 real prompts T=0 | e2e=444.62 tok/s | decode(C/meanTPOT)=515.5 | tok/step=3.21 | meanTTFT=115.63 ms
-ROW cohort C4 real prompts T=0 | e2e=721.85 tok/s | decode(C/meanTPOT)=954.7 | tok/step=3.30 | meanTTFT=138.64 ms
-ROW cohort C8 real prompts T=0 | e2e=829.51 tok/s | decode(C/meanTPOT)=1307.2 | tok/step=3.25 | meanTTFT=866.88 ms
-```
-</details>
 
 <details>
 <summary><code>SPEC_ATTN=0</code> on your stack (setup B, second run)</summary>
