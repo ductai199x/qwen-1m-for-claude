@@ -14,6 +14,7 @@
 #               RoPE table extended past 262K so it doesn't crash at long context)
 #   SPEC_TOKENS speculative tokens per step; 0 disables speculative decoding (default: 3 for mtp, 7 for dflash)
 #   DRAFT_SAMPLE speculative draft_sample_method: greedy or probabilistic (default: vLLM's, greedy)
+#   DYNAMIC_K_JSON per-batch-size draft counts for speculative decoding (vLLM num_speculative_tokens_per_batch_size)
 #   VLLM_BIN    vllm executable (default: .venv/bin/vllm)
 #   MODEL       Hugging Face model to serve (default: Qwen/Qwen3.8-27B-FP8)
 #   SERVED_NAME model name clients use (default: qwen-27b-1m)
@@ -42,6 +43,9 @@ case "$SPEC_METHOD" in
 esac
 if [[ -n ${DRAFT_SAMPLE:-} ]]; then
     spec_json="${spec_json%\}}, \"draft_sample_method\": \"$DRAFT_SAMPLE\"}"
+fi
+if [[ -n ${DYNAMIC_K_JSON:-} ]]; then   # per-batch-size draft count, e.g. [[1,3,7],[4,8,3],[9,1024,1]]
+    spec_json="${spec_json%\}}, \"num_speculative_tokens_per_batch_size\": $DYNAMIC_K_JSON}"
 fi
 if (( SPEC_TOKENS > 0 )); then
     spec=(--speculative-config "$spec_json")
