@@ -36,4 +36,4 @@ done
 kill -TERM -- -$pid 2>/dev/null
 for _ in $(seq 60); do kill -0 $pid 2>/dev/null || break; sleep 1; done
 kill -KILL -- -$pid 2>/dev/null
-until [[ $(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits -i $RUN_GPUS | sort -n | tail -1) -lt 1000 ]]; do sleep 2; done
+until [[ $(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits -i $RUN_GPUS | sort -n | tail -1) -lt ${IDLE_MIB:-1000} ]]; do sleep 2; done
