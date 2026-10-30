@@ -1,0 +1,4 @@
+E2E {"answers": 16, "total_s": 90.2, "median_s": 0.6, "total_tokens": 32075, "reasoning_tokens": 20193, "tok_per_s": 355.6, "correct": "10/10"}
+COPY {"decode_med": 685.4, "rows": [{"tokens": 2941, "ttft": 5.86, "decode_tps": 697.7}, {"tokens": 2994, "ttft": 6.46, "decode_tps": 685.4}, {"tokens": 3340, "ttft": 6.43, "decode_tps": 685.1}]}
+LONG {"cold": {"prompt": 600830, "cached": 0, "ttft": 78.45, "decode_tps": 238.6}, "warm": {"ttft_med": 3.22, "decode_med": 212.5, "cached_frac": 0.991, "prompt_last": 621003, "ttft": [3.74, 3.36, 3.22, 3.2, 3.17], "decode": [235.3, 187.7, 250.6, 212.5, 210.5]}, "short": {"decode_med": 286.5, "decode": [293.9, 279.8, 286.5]}}
+NEEDLE 182s 960630 prompt tokens -> 'PURPLE-ELEPHANT-4721'

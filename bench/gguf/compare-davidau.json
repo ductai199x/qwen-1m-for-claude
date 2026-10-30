@@ -1,0 +1,74 @@
+{
+ "summary": {
+  "model": "davidau",
+  "positions": 1981,
+  "top1_agree": 0.9985,
+  "mean_p_of_llama_token": 0.8728
+ },
+ "rows": [
+  {
+   "prompt": "Explain how a hash map handles collision",
+   "n": 300,
+   "top1_agree": 1.0,
+   "first_disagree": null,
+   "mean_p_of_llama_token": 0.8665,
+   "llama_text": "# How Hash Maps Handle Collisions\n\nA **hash map** stores key-value pairs by hashing the key to an index in an array. A *"
+  },
+  {
+   "prompt": "Write a haiku about debugging at 3am, th",
+   "n": 248,
+   "top1_agree": 1.0,
+   "first_disagree": null,
+   "mean_p_of_llama_token": 0.7662,
+   "llama_text": "Blue light cuts the dark,\nOne missing semicolon,\nThe world holds its breath.\n\n***\n\n**Imagery Explanation:**\n\n*   **\"Blue"
+  },
+  {
+   "prompt": "What is the derivative of x^3 * sin(x)? ",
+   "n": 300,
+   "top1_agree": 1.0,
+   "first_disagree": null,
+   "mean_p_of_llama_token": 0.963,
+   "llama_text": "To find the derivative of the function $f(x) = x^3 \\sin(x)$, we need to use the **Product Rule**.\n\n### 1. Identify the C"
+  },
+  {
+   "prompt": "Summarize the causes of the 2008 financi",
+   "n": 300,
+   "top1_agree": 0.9933,
+   "first_disagree": 70,
+   "mean_p_of_llama_token": 0.8181,
+   "llama_text": "Here are the primary causes of the 2008 financial crisis summarized in five bullet points:\n\n*   **Subprime Mortgage Lend"
+  },
+  {
+   "prompt": "Translate to French: 'The meeting has be",
+   "n": 20,
+   "top1_agree": 1.0,
+   "first_disagree": null,
+   "mean_p_of_llama_token": 0.934,
+   "llama_text": "La r\u00e9union a \u00e9t\u00e9 d\u00e9plac\u00e9e \u00e0 jeudi apr\u00e8s-midi, car la salle est r\u00e9serv\u00e9e.<|im_end|>"
+  },
+  {
+   "prompt": "Refactor this function to be more readab",
+   "n": 213,
+   "top1_agree": 1.0,
+   "first_disagree": null,
+   "mean_p_of_llama_token": 0.894,
+   "llama_text": "Here's a more readable refactored version:\n\n```python\ndef square_even_numbers(numbers):\n    \"\"\"Return a list of squares "
+  },
+  {
+   "prompt": "A train leaves at 9:40 and arrives at 13",
+   "n": 300,
+   "top1_agree": 1.0,
+   "first_disagree": null,
+   "mean_p_of_llama_token": 0.944,
+   "llama_text": "To determine the duration of the trip in minutes, we can calculate the difference between the arrival time and the depar"
+  },
+  {
+   "prompt": "Give three arguments for and three again",
+   "n": 300,
+   "top1_agree": 0.9967,
+   "first_disagree": 165,
+   "mean_p_of_llama_token": 0.8413,
+   "llama_text": "Here are three arguments for and three arguments against remote work, highlighting the key benefits and challenges assoc"
+  }
+ ]
+}
