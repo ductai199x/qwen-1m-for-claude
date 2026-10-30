@@ -34,3 +34,40 @@ the "System message must be at the beginning" guard that breaks the prefix cache
   tower), prefix cache 98% with Claude Code-style inline reminders, `/v1/messages` effort=high all pass;
   e2e 10/10 graded at 355.6 tok/s; copy-heavy 685 tok/s; 600K cold 78.5 s / warm 3.2 s / decode 212.5 tok/s;
   needle found at 960,630 tokens. Raw: `bench/gguf/*.json`, `bench/gguf/davidau-serving.txt`.
+
+## DavidAU's reasoning modes (`{REASON:...}`)
+
+Most of what makes DavidAU's model answer "like DavidAU" lives in its chat template, not its weights: typing
+`{REASON:deeptree}` (or ~35 other modes: `socrates`, `einstein`, `coder`, `brainstorm`, `teacher`, ...; `i` prefix for
+instruct variants like `{REASON:isocrates}`; `{REASON:help}` for the menu) swaps in a large mode-specific system prompt.
+With no tag the template renders exactly like the official one. Weights alone were verified equivalent above.
+
+To get the modes behind Claude Code, serve with DavidAU's template patched by `tools/patch_davidau_template.py` (same
+three fixes as `chat_template.jinja`; DavidAU's template is copyright DavidAU, so the patched copy stays in
+`models/davidau-hf/chat_template.claude.jinja` and is not committed):
+
+```bash
+python tools/patch_davidau_template.py models/davidau-hf/chat_template.jinja models/davidau-hf/chat_template.claude.jinja
+PORT=8001 MODEL=models/davidau-hf SERVED_NAME=davidau-27b-1m SPEC_METHOD=dflash KV_OFFLOAD_GIB=0 \
+    VLLM_BIN=.venv-port/bin/vllm VLLM_DFLASH2_LOOKUP=1 DRAFT_SAMPLE=probabilistic \
+    ./serve.sh --quantization fp8 --chat-template models/davidau-hf/chat_template.claude.jinja
+```
+
+Template checks (CPU): vLLM no longer merges inline system messages; 48 normal renders (modes by tag and by effort,
+instruct modes, help, thinking off, tools, system prompts) are byte-identical to the original template; effort
+`high`/`max`/`minimal`/None/unknown -- each of which made the original raise -- map to the intended mode; a tag still
+overrides the request's effort; unknown content blocks are skipped. Note the original raised on a *missing* effort, so
+it could not serve plain requests on vLLM at all.
+
+Instruct modes needed a vLLM fix: they turn thinking off *inside* the template, which vLLM's qwen3 reasoning parser
+could not see (it decides from the request's `enable_thinking`), so the whole answer was filed as thinking and the
+visible answer was empty. The port patch now makes the parser honour a think block the prompt already closed, on both
+the streaming and non-streaming paths.
+
+Live (2026-10-30, TP=2, `/v1/messages` effort=high): `{REASON:deeptree}` produces DavidAU's full "DEEP TREE-OF-THOUGHT
+HYPER-MATRIX v4.0" answer (Path Alpha/Beta/Gamma, phases, scoring, pruning) while the same question without the tag
+gets a normal concise answer; `{REASON:help}` shows the mode menu; instruct modes (`isocrates`, `icoder`) answer with
+no thinking and a visible answer on Anthropic streaming, Anthropic non-streaming and OpenAI non-streaming; reasoning
+modes and plain prompts split thinking/answer as before. Regression: tool calls, images, prefix cache 98% with inline
+reminders, e2e 10/10, copy-heavy 693 tok/s. One caveat: switching mode mid-conversation changes the system prompt, so
+that turn misses the prefix cache (inherent to how the template works).

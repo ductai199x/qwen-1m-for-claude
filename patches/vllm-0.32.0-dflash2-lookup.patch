@@ -11,6 +11,10 @@ Changes for 0.32: the model_runner draft-count hunk rebased onto 0.32's draft-to
 FA hunk moved to FlashAttentionImpl.forward (fuzzy apply had put it in do_kv_cache_update); DFlash2Speculator.propose()
 takes 0.32's dp_sync_state and num_speculative_tokens.
 
+Also (not from HyperQwen): the qwen3 reasoning parser honours a think block the chat template already closed in
+the prompt (e.g. DavidAU's {REASON:i...} instruct modes); before, such output was all filed as reasoning.
+parser/qwen3.py, parser/abstract_parser.py (DelegatingParser forwards set_prompt_token_ids), parser/engine/adapters.py.
+
 diff --git a/distributed/kv_transfer/kv_connector/v1/offloading/scheduler.py b/distributed/kv_transfer/kv_connector/v1/offloading/scheduler.py
 index 806267d..d1c3b93 100644
 --- a/distributed/kv_transfer/kv_connector/v1/offloading/scheduler.py
@@ -333,6 +337,67 @@ index 861a7c5..f8bc81f 100644
              params_dtype=vllm_config.model_config.dtype,
              quant_config=quant_config,
          )
+diff --git a/parser/abstract_parser.py b/parser/abstract_parser.py
+index 12a9c23..19e3830 100644
+--- a/parser/abstract_parser.py
++++ b/parser/abstract_parser.py
+@@ -347,6 +347,12 @@ class DelegatingParser(Parser):
+     values (no reasoning extraction, no tool calls).
+     """
+ 
++    def set_prompt_token_ids(self, prompt_token_ids: Sequence[int]) -> None:
++        # Forward the rendered prompt to the reasoning parser (non-streaming; streaming forwards it through
++        # adjust_initial_state_from_prompt in parse_delta).
++        if self._reasoning_parser is not None and hasattr(self._reasoning_parser, "set_prompt_token_ids"):
++            self._reasoning_parser.set_prompt_token_ids(prompt_token_ids)
++
+     def extract_reasoning(
+         self,
+         model_output: str,
+diff --git a/parser/engine/adapters.py b/parser/engine/adapters.py
+index cd7aaa7..b46b126 100644
+--- a/parser/engine/adapters.py
++++ b/parser/engine/adapters.py
+@@ -71,6 +71,9 @@ class ParserEngineReasoningAdapter(ReasoningParser):
+     def adjust_initial_state_from_prompt(self, prompt_token_ids: Sequence[int]) -> None:
+         self._parser_engine.adjust_initial_state_from_prompt(prompt_token_ids)
+ 
++    def set_prompt_token_ids(self, prompt_token_ids: Sequence[int]) -> None:
++        self._parser_engine.set_prompt_token_ids(prompt_token_ids)
++
+     def extract_content_ids(self, input_ids: list[int]) -> list[int]:
+         return self._parser_engine.extract_content_ids(input_ids)
+ 
+diff --git a/parser/qwen3.py b/parser/qwen3.py
+index a11551a..c937936 100644
+--- a/parser/qwen3.py
++++ b/parser/qwen3.py
+@@ -255,3 +255,25 @@ class Qwen3Parser(ParserEngine):
+         if not self.thinking_enabled:
+             return None, model_output
+         return super().extract_reasoning(model_output, request)
++
++    def _prompt_closed_thinking(self, prompt_token_ids) -> bool:
++        # A chat template can disable thinking itself by rendering an empty, closed think block after the generation
++        # prompt (e.g. mode switches inside the template, invisible to enable_thinking in the request). Generation
++        # then starts in content, so don't wait for a </think> that will never come.
++        return bool(self.thinking_enabled and prompt_token_ids and self.is_reasoning_end(list(prompt_token_ids)))
++
++    def set_prompt_token_ids(self, prompt_token_ids) -> None:
++        if self._prompt_closed_thinking(prompt_token_ids):
++            self.thinking_enabled = False
++
++    def _single_pass_parse(self, text, token_ids, initial_state=None):
++        # non-streaming parse() resets to the configured initial state (REASONING); honour a prompt-closed think block
++        if initial_state is None and not self.thinking_enabled:
++            initial_state = ParserState.CONTENT
++        return super()._single_pass_parse(text, token_ids, initial_state)
++
++    def adjust_initial_state_from_prompt(self, prompt_token_ids) -> None:
++        if self._prompt_closed_thinking(prompt_token_ids):
++            self.thinking_enabled = False
++            self._reset(initial_state=ParserState.CONTENT)
++            self._reasoning_ended = True
 diff --git a/third_party/flash_linear_attention/ops/fused_recurrent.py b/third_party/flash_linear_attention/ops/fused_recurrent.py
 index eb08b93..8a0b606 100644
 --- a/third_party/flash_linear_attention/ops/fused_recurrent.py
