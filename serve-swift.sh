@@ -10,17 +10,18 @@
 # HyperQwen's split-KV verify attention and torch top-k sampler fallback stay off: on H200 they made
 # decode at 600K context ~3x slower (verified: 56 vs 177 tok/s, TP=1). LOOKUP=0 serves on the stock .venv.
 #
-# The host-RAM prefix-cache tier is off by default here: with the DFlash2 drafter vLLM's offloading
-# never restores a prefix (0 cached tokens on return; not root-caused -- vLLM logs that no KV-cache
-# group is annotated as a drafter group). For many concurrent long sessions, SPEC_METHOD=mtp KV_OFFLOAD_GIB=200 gets the RAM tier
-# back at the cost of ~30% slower decode at long context.
+# The host-RAM prefix-cache tier (KV_OFFLOAD_GIB, default 200) is on only with LOOKUP=1: .venv-port carries
+# HyperQwen #424, without which vLLM's offloading never restores a prefix when DFlash2 is on (0 cached tokens on
+# return). Verified at 600K on H200: an evicted session restores in 2.6 s vs 77 s, answers byte-identical.
+# On the stock .venv (LOOKUP=0) the tier stays off.
 cd "$(dirname "$0")"
 export MODEL=ukisai/Swift-1.5-Qwen3.8-27b SERVED_NAME="${SERVED_NAME:-swift-27b-1m}" SPEC_METHOD="${SPEC_METHOD:-dflash}"
 if [[ $SPEC_METHOD == dflash ]]; then
-    export KV_OFFLOAD_GIB="${KV_OFFLOAD_GIB:-0}"
     [[ -x .venv-port/bin/vllm ]] && LOOKUP="${LOOKUP:-1}" || LOOKUP=0
     if [[ $LOOKUP == 1 ]]; then
         export VLLM_BIN=.venv-port/bin/vllm VLLM_DFLASH2_LOOKUP=1 DRAFT_SAMPLE="${DRAFT_SAMPLE:-probabilistic}"
+    else
+        export KV_OFFLOAD_GIB="${KV_OFFLOAD_GIB:-0}"
     fi
 fi
 exec ./serve.sh --quantization fp8 "$@"
