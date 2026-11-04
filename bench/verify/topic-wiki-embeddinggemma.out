@@ -1,0 +1,8 @@
+example queries: ['The planetary systems of stars other than the Sun and the Solar System are a staple element in many works of t', 'The Dresden Files, a contemporary fantasy/mystery novel series written by American author Jim Butcher, feature', 'The ___, or conditional perseverance of the saints, or commonly conditional security, is the Arminian Christia']
+article body tokens: min 19819, median 24601, max 60688
+      length | whole: top1   MRR  s/doc | chunked: top1   MRR
+         512 |        0.68  0.75   0.05 |          0.68  0.75
+        2048 |        0.74  0.81   0.05 |          0.73  0.80
+        8192 |        0.75  0.82   0.11 |          0.73  0.80
+       16384 |        0.77  0.83   0.27 |          0.76  0.83
+full article |        0.81  0.86   0.54 |          0.81  0.86
