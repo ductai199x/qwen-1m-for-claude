@@ -16,6 +16,8 @@
 # On the stock .venv (LOOKUP=0) the tier stays off.
 cd "$(dirname "$0")"
 export MODEL=ukisai/Swift-1.5-Qwen3.8-27b SERVED_NAME="${SERVED_NAME:-swift-27b-1m}" SPEC_METHOD="${SPEC_METHOD:-dflash}"
+# 0.78 of 140 GB = about 120 GB actually used per GPU (real usage settles ~10 GB above the fraction)
+export GPU_UTIL="${GPU_UTIL:-0.78}"
 if [[ $SPEC_METHOD == dflash ]]; then
     [[ -x .venv-port/bin/vllm ]] && LOOKUP="${LOOKUP:-1}" || LOOKUP=0
     if [[ $LOOKUP == 1 ]]; then
