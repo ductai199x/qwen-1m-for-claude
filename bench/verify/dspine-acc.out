@@ -1,0 +1,3 @@
+{"name": "A1-033-dflash2", "bench": "bench_gsm8k_acc", "startup_s": 134, "kv_tokens": 843258, "vram_mib": "120258", "result": {"n": 150, "accuracy": 0.967}}
+{"name": "A2-033-dspine", "bench": "bench_gsm8k_acc", "startup_s": 132, "kv_tokens": 643223, "vram_mib": "112486", "result": {"n": 150, "accuracy": 0.967}}
+dspine-acc-done

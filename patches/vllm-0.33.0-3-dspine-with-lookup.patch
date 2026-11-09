@@ -1,0 +1,19 @@
+diff --git a/v1/worker/gpu/spec_decode/dspine/speculator.py b/v1/worker/gpu/spec_decode/dspine/speculator.py
+index ea7392a..a224a0f 100644
+--- a/v1/worker/gpu/spec_decode/dspine/speculator.py
++++ b/v1/worker/gpu/spec_decode/dspine/speculator.py
+@@ -19,6 +19,14 @@ from vllm.v1.worker.gpu.spec_decode.dflash2.speculator import (
+ class DSpineSpeculator(DFlash2Speculator):
+     _speculator_name = "DSpine"
+ 
++    # DSpine builds on DFlash2's candidate scoring but not on HyperQwen's DFlash2 lookup
++    # drafting (whose propose() and per-step draft-length request read state that only
++    # DFlash2Speculator.__init__ sets up, and which DSpine skips): draft every block.
++    propose = DFlashSpeculator.propose
++
++    def next_num_draft_tokens(self) -> int | None:
++        return None
++
+     def __init__(self, vllm_config: VllmConfig, device: torch.device):
+         DFlashSpeculator.__init__(self, vllm_config, device)
+         hf_config = self.draft_model_config.hf_config

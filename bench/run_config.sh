@@ -28,7 +28,7 @@ mem=$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits -i $RUN_G
 # BENCH may list several benchmark scripts; each gets its own result line
 for bench in ${BENCH:-bench/bench_long.py}; do
     GREEDY_TAG=${GREEDY_TAG:-}; [[ $bench == *@* ]] && { GREEDY_TAG=-${bench#*@}; bench=${bench%@*}; }
-    res=$(.venv/bin/python -I $bench $PORT qwen-27b-1m $(case $bench in *bench_e2e*) ;; *bench_copy*) echo "${COPY_CTX:-100000}" ;; *bench_greedy*) echo "bench/verify/tokens-$name${GREEDY_TAG:-}.json" ;; *) echo "$TARGET" ;; esac) 2>&1 | tail -1)
+    res=$(.venv/bin/python -I $bench $PORT qwen-27b-1m $(case $bench in *bench_e2e*) ;; *bench_copy*) echo "${COPY_CTX:-100000}" ;; *bench_greedy*) echo "bench/verify/tokens-$name${GREEDY_TAG:-}.json" ;; *bench_gsm8k_acc*) echo "${GSM8K_N:-100} bench/verify/gsm8k-$name.json" ;; *) echo "$TARGET" ;; esac) 2>&1 | tail -1)
     echo "{\"name\": \"$name\", \"bench\": \"$(basename $bench .py)\", \"startup_s\": $startup, \"kv_tokens\": ${kv:-null}, \"vram_mib\": \"$mem\", \"result\": ${res:-null}}" | tee -a ${RESULTS:-bench/results.jsonl}
 done
 
